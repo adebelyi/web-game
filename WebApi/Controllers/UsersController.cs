@@ -15,7 +15,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
-        public IActionResult CreateUser([FromBody] UserToCreateDto user)
+        public IActionResult CreateUser([FromBody] object user)
         {
             throw new NotImplementedException();
         }
@@ -27,14 +27,14 @@ namespace WebApi.Controllers
         }
 
         [HttpPut("{userId}")]
-        public IActionResult UpdateUser([FromRoute] Guid userId, [FromBody] UserToUpdateDto user)
+        public IActionResult UpdateUser([FromRoute] Guid userId, [FromBody] object user)
         {
             throw new NotImplementedException();
         }
 
         [HttpPatch("{userId}")]
         public IActionResult PartiallyUpdateUser([FromRoute] Guid userId,
-            [FromBody] JsonPatchDocument<UserToUpdateDto> patchDoc)
+            [FromBody] JsonPatchDocument<object> patchDoc)
         {
             throw new NotImplementedException();
         }

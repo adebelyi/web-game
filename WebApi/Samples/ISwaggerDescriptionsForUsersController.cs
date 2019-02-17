@@ -42,7 +42,7 @@ namespace WebApi.Samples
         [SwaggerResponse(201, "Пользователь создан")]
         [SwaggerResponse(400, "Некорректные входные данные")]
         [SwaggerResponse(422, "Ошибка при проверке")]
-        IActionResult CreateUser([FromBody] UserToCreateDto user);
+        IActionResult CreateUser([FromBody] object user);
 
         /// <summary>
         /// Удалить пользователя
@@ -66,7 +66,7 @@ namespace WebApi.Samples
         [SwaggerResponse(204, "Пользователь обновлен")]
         [SwaggerResponse(400, "Некорректные входные данные")]
         [SwaggerResponse(422, "Ошибка при проверке")]
-        IActionResult UpdateUser([FromRoute, Required] Guid userId, [FromBody] UserToUpdateDto user);
+        IActionResult UpdateUser([FromRoute, Required] Guid userId, [FromBody] object user);
 
         /// <summary>
         /// Частично обновить пользователя
@@ -81,7 +81,7 @@ namespace WebApi.Samples
         [SwaggerResponse(404, "Пользователь не найден")]
         [SwaggerResponse(422, "Ошибка при проверке")]
         IActionResult PartiallyUpdateUser([FromRoute, Required] Guid userId,
-            [FromBody] JsonPatchDocument<UserToUpdateDto> patchDoc);
+            [FromBody] JsonPatchDocument<object> patchDoc);
 
         /// <summary>
         /// Получить пользователей

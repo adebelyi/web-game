@@ -18,7 +18,11 @@
 
     <style>
         .slides .center {
-	    text-align: center;
+	          text-align: center;
+        }
+
+        .slides .right {
+	          text-align: right;
         }
     </style>
 
@@ -34,16 +38,770 @@
 
 </script></section>
 
+
 <section data-markdown><script type="text/template">
 
-## Зачем?
+## Про хорошие API
 
 ***
 
-<p><img src="assets/dotnetdesign.png" width="800"></p>
+### Зачем создавать API?
+
+***
+
+### Бэкенд для SPA
+
+<p><img src="assets/frontandback.png" width="300"></p>
+
+*Только ли?*
+
+***
+
+### Потребности в API
+
+- Один функционал в разных типах приложений
+  *Web, Mobile, Desktop*
+- Переиспользование API в продуктах компании
+  *Сервис аутентификации, биллинг, сервис адресов*
+- API для внешних заказчиков
+  *Интеграции с банками*
+- Автоматизация с помощью ботов
+  *Боты для трейдинга, группы ulearn*
+
+***
+
+### А какое API хорошее?
+
+***
+
+### Особенности хорошего API
+
+1. Его **легко изучать**!
+  - Устроено стандартным, предсказуемым образом
+  - Понятно сообщает об ошибках
+  - Гранулярно: разбито на небольшие переиспользуемые кусочки
+  - Подсказывает доступную функциональность
+  - Документировано
+2. Ему **можно доверять**!
+  - Стабильное, хотя допустимо расширение функционала
+  - Версионирование при несовместимых изменениях
+
+***
+
+### Наша цель — понятное API
+
+</script></section>
 
 
----
+<section data-markdown><script type="text/template">
+
+## API посредством HTTP
+
+***
+
+### Получение данных
+
+Запрос
+```http
+GET /documents/19?page=20&notes=1 HTTP/1.1
+Host: example.com
+Accept: text/html
+```
+
+Ответ
+```http
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Content-Length: 1234
+
+<!-- ДОКУМЕНТ -->
+```
+
+***
+
+### Отправка данных
+
+Запрос
+```http
+POST /messagebox HTTP/1.1
+Host: example.com
+Accept: application/json, application/xml
+X-Session: 5CA17001-04C5-4BA8-A05B-0F08FA9E4465
+Content-Type: application/json
+Content-Length: 456
+
+{"msg":"Hi, people!","from": ... }
+```
+
+Ответ
+```http
+HTTP/1.1 204 No Content
+```
+
+***
+
+### Способы передачи данных в HTTP
+- Method: `GET`, `POST`
+- Path: `/documents/19`, `/messagebox`
+- Query string: `page=20&notes=1`
+- Headers: `X-Session`
+- Body: `{"msg":"Hi, people!","from": ... }`
+
+**Что и для чего использовать в API?**
+
+***
+
+### Вся инфомация в теле запроса
+
+```http
+POST /appointmentService HTTP/1.1
+[various other headers]
+
+<openSlotRequest date = "2010-01-04" doctor = "mjones"/>
+```
+
+```http
+HTTP/1.1 200 OK
+[various headers]
+
+<openSlotList>
+  <slot start = "1400" end = "1450">
+    <doctor id = "mjones"/>
+  </slot>
+  <slot start = "1600" end = "1650">
+    <doctor id = "mjones"/>
+  </slot>
+</openSlotList>
+```
+
+***
+
+### Уровень 0. The Swamp of POX
+
+- Все методы собраны в кучу
+- Сложно понять, какие есть сущности
+- Сложно понять, какие доступны действия
+
+*POX* — Plain Old Xml
+
+***
+
+### Как сделать API лучше?
+
+***
+
+### Сделаем разные пути у сущностей
+
+```http
+POST /doctors/mjones HTTP/1.1
+[various other headers]
+
+<openSlotRequest date = "2010-01-04"/>
+```
+
+```http
+HTTP/1.1 200 OK
+[various headers]
+
+<openSlotList>
+  <slot id = "1234" doctor = "mjones" start = "1400" end = "1450"/>
+  <slot id = "5678" doctor = "mjones" start = "1600" end = "1650"/>
+</openSlotList>
+```
+
+***
+
+```http
+POST /slots/1234 HTTP/1.1
+[various other headers]
+
+<appointmentRequest>
+  <patient id = "jsmith"/>
+</appointmentRequest>
+```
+
+```http
+HTTP/1.1 200 OK
+[various headers]
+
+<appointment>
+  <slot id = "1234" doctor = "mjones" start = "1400" end = "1450"/>
+  <patient id = "jsmith"/>
+</appointment>
+```
+
+***
+
+### Уровень 1. Resourses
+
+- Иерархия сущностей представлена путями в URI
+- Поэтому к каждой сущности можно обращаться отдельно,
+  а значит каждая сущность — независимый ресурс
+- API разделяется на части, сложность каждой части уменьшается
+
+***
+
+### Представления ресурсов
+
+Ресурс может быть представлен в разных видах: JSON, XML,
+Excel, XHTML и т.д.
+
+Говорят, у **одного ресурса есть несколько представлений**
+
+Необходимое представление можно запросить через
+`Content Negotiation`
+
+***
+
+### Content Negotiation
+
+В запросе должен быть заголовок `Accept`
+```http
+GET /documents/19?page=20&notes=1 HTTP/1.1
+Accept: application/json, application/xml
+```
+
+Сервер попытается ответить запрошенным представлением ресурса
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 1234
+```
+
+[Подробнее](https://developer.mozilla.org/ru/docs/Web/HTTP/Content_negotiation)
+
+***
+
+### Media Types
+
+```txt
+text/plain
+text/html
+text/css
+
+application/json
+application/xml
+
+image/gif
+image/svg+xml
+
+application/xhtml+xml
+application/vnd.ms-excel
+application/vnd.mozilla.xul+xml
+```
+
+vnd. — префикс для типов от компаний
++xml — передается посредством XML
+
+***
+
+### Как сделать API лучше?
+
+***
+
+### Используем Methods
+
+```http
+GET /doctors/mjones/slots?date=20100104&status=open HTTP/1.1
+[various headers]
+```
+
+```http
+HTTP/1.1 200 OK
+[various headers]
+
+<openSlotList>
+  <slot id = "1234" doctor = "mjones" start = "1400" end = "1450"/>
+  <slot id = "5678" doctor = "mjones" start = "1600" end = "1650"/>
+</openSlotList>
+```
+
+Используется GET для неизменяющего запроса
+
+***
+
+### Используем Status codes
+
+```http
+POST /slots/1234 HTTP/1.1
+[various other headers]
+
+<appointmentRequest>
+  <patient id = "jsmith"/>
+</appointmentRequest>
+```
+
+```http
+HTTP/1.1 201 Created
+Location: slots/1234/appointment
+[various headers]
+
+<appointment>
+  <slot id = "1234" doctor = "mjones" start = "1400" end = "1450"/>
+  <patient id = "jsmith"/>
+</appointment>
+```
+
+Location содержит путь до созданного ресурса
+
+***
+
+```http
+POST /slots/1234 HTTP/1.1
+[various other headers]
+
+<appointmentRequest>
+  <patient id = "jsmith"/>
+</appointmentRequest>
+```
+
+```https
+HTTP/1.1 409 Conflict
+[various headers]
+
+<openSlotList>
+  <slot id = "5678" doctor = "mjones" start = "1600" end = "1650"/>
+</openSlotList>
+```
+
+Тело содержит свободный слот
+
+***
+
+### Уровень 2. HTTP Verbs
+
+- Стандартные методы и коды ошибок уменьшяют вариативность, уменьшая сложность API
+- Ответы содержат информацию о возможных действиях
+
+***
+
+### Какие бывают действия
+
+**Methods**: `GET`, `POST`, `DELETE`, `PUT`, `PATCH`, `HEAD`, `OPTIONS`
+
+**Безопасные** действия: не вносят изменений
+
+**Идемпотентные** действия: повторый вызов не меняет результат
+
+***
+
+### Таблица действий
+
+| Method   	| Действие                     	| Безоп. 	| Идемпот. 	|
+|---------	|------------------------------	|--------	|----------	|
+| GET     	| Получение ресурса            	|        	|          	|
+| POST    	| Добавление ресурса           	|        	|          	|
+| DELETE  	| Удаление ресурса             	|        	|          	|
+| PUT     	| Полное обновление ресурса    	|        	|          	|
+| PATCH   	| Частичное обновление ресурса 	|        	|          	|
+| HEAD    	| Метаинформация о ресурсе     	|        	|          	|
+| OPTIONS 	| Возможные действия           	|        	|          	|
+
+*Какие безопасные?*
+
+***
+
+### Таблица действий
+
+| Method   	| Действие                     	| Безоп. 	| Идемпот. 	|
+|---------	|------------------------------	|--------	|----------	|
+| GET     	| Получение ресурса            	| Да     	|          	|
+| POST    	| Добавление ресурса           	| Нет    	|          	|
+| DELETE  	| Удаление ресурса             	| Нет    	|          	|
+| PUT     	| Полное обновление ресурса    	| Нет    	|          	|
+| PATCH   	| Частичное обновление ресурса 	| Нет    	|          	|
+| HEAD    	| Метаинформация о ресурсе     	| Да     	|          	|
+| OPTIONS 	| Возможные действия           	| Да     	|          	|
+
+*Какие идемпотентные?*
+
+***
+
+### Таблица действий
+
+| Method   	| Действие                     	| Безоп. 	| Идемпот. 	|
+|---------	|------------------------------	|--------	|----------	|
+| GET     	| Получение ресурса            	| **Да** 	| Да       	|
+| POST    	| Добавление ресурса           	| Нет    	| **Нет**  	|
+| DELETE  	| Удаление ресурса             	| Нет    	| **Да**   	|
+| PUT     	| Полное обновление ресурса    	| Нет    	| **Да**   	|
+| PATCH   	| Частичное обновление ресурса 	| Нет    	| **Нет**  	|
+| HEAD    	| Метаинформация о ресурсе     	| **Да** 	| Да       	|
+| OPTIONS 	| Возможные действия           	| **Да** 	| Да       	|
+
+***
+
+### Коды ответов для API
+
+1xx: Informational
+2xx: **Successful** - возвращаются в случае успеха
+3xx: Redirection
+4xx: **Client Error** - возвращаются при ошибках
+5xx: Server Error
+
+***
+
+| Код  	| Фраза                	| Применение                                                            	|
+|------	|----------------------	|-----------------------------------------------------------------------	|
+| 200  	| OK                   	| Запрос выполнен, ответ с содержимым                                   	|
+| 201  	| Created              	| Ресурс создан, ответ обычно содержит ссылки на созданный ресурс       	|
+| 204  	| No&nbsp;Content      	| Запрос выполнен, ответ без содержимого                                	|
+
+***
+
+| Код  	| Фраза                       	| Применение                                                            	|
+|------	|-----------------------------	|-----------------------------------------------------------------------	|
+| 400  	| Bad&nbsp;Request            	| Ошибка в запросе клиента                                              	|
+| 404  	| Not&nbsp;Found              	| Ресурс не найден                                                      	|
+| 405  	| Method&nbsp;Not&nbsp;Allowed 	| Метод не доступен, должны возвращаться доступные методы               	|
+| 406  	| Not&nbsp;Acceptable         	| Ресурс не может быть представлен в запрошенном виде                   	|
+| 409  	| Conflict                    	| Конфликт с текущем состоянием ресурса, часто из-за обновления         	|
+| 422  	| Unprocessable&nbsp;Entity   	| Не пройдены логические проверки                                       	|
+
+***
+
+### Как сделать API лучше?
+
+***
+
+### Добавим ссылки на возможные действия
+
+```http
+GET /doctors/mjones/slots?date=20100104&status=open HTTP/1.1
+[various headers]
+```
+
+```http
+HTTP/1.1 200 OK
+[various headers]
+
+<openSlotList>
+  <slot id = "1234" doctor = "mjones" start = "1400" end = "1450">
+     <link rel = "/linkrels/slot/book" 
+           uri = "/slots/1234"/>
+  </slot>
+  <slot id = "5678" doctor = "mjones" start = "1600" end = "1650">
+     <link rel = "/linkrels/slot/book" 
+           uri = "/slots/5678"/>
+  </slot>
+</openSlotList>
+```
+
+***
+
+```http
+POST /slots/1234 HTTP/1.1
+[various other headers]
+
+<appointmentRequest>
+  <patient id = "jsmith"/>
+</appointmentRequest>
+```
+
+```http
+HTTP/1.1 201 Created
+Location: http://royalhope.nhs.uk/slots/1234/appointment
+[various headers]
+
+<appointment>
+  <slot id = "1234" doctor = "mjones" start = "1400" end = "1450"/>
+  <patient id = "jsmith"/>
+  <link rel = "/linkrels/appointment/cancel"
+        uri = "/slots/1234/appointment"/>
+  <link rel = "self"
+        uri = "/slots/1234/appointment"/>
+  <link rel = "/linkrels/appointment/changeTime"
+        uri = "/doctors/mjones/slots?date=20100104&status=open"/>
+</appointment>
+```
+
+***
+
+### Уровень 3. Hypermedia Controls
+
+- В телах ответов содержатся ссылки на возможные действия, упрощая исследование API
+- API становится похоже на конечный автомат, где после каждого запроса доступно некоторое количество переходов
+
+***
+
+### Следующий уровень API =D
+
+<p><img src="assets/bot.png" width="400"></p>
+
+***
+
+### Richardson Maturity Model
+- Уровень 0. The Swamp of POX
+- Уровень 1. Resourses
+- Уровень 2. HTTP Verbs
+- Уровень 3. Hypermedia Controls
+
+
+[Подробнее](https://martinfowler.com/articles/richardsonMaturityModel.html)
+
+***
+
+### HTTP Verbs — гигиенический минимум
+
+</script></section>
+
+
+<section data-markdown><script type="text/template">
+
+## Инструменты разработки API
+
+***
+
+### Создание Web API для .NET Core
+
+```bash
+dotnet new webapi -n ValuesApi
+# Опционально, чтобы смотреть код в Visual Studio
+dotnet sln add ValuesApi
+```
+
+***
+
+### Program.cs
+```cs
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        CreateWebHostBuilder(args).Build().Run();
+    }
+
+    public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
+        WebHost.CreateDefaultBuilder(args)
+            .UseStartup<Startup>();
+}
+```
+
+***
+
+### Startup.cs
+```cs
+public class Startup
+{
+    // Use this method to add services to the container.
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddMvc().SetCompatibilityVersion(...);
+    }
+
+    // Use this method to configure the HTTP request pipeline.
+    public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+    {
+        app.UseHttpsRedirection();
+        app.UseMvc();
+    }
+}
+```
+
+***
+
+### ValuesController.cs
+
+```cs
+[Route("api/[controller]")]
+[ApiController]
+public class ValuesController : ControllerBase
+{
+  [HttpGet] // GET api/values
+  public ActionResult<IEnumerable<string>> Get() => new[] {"value1", "value2"};
+
+  [HttpGet("{id}")] // GET api/values/5
+  public ActionResult<string> Get(int id) => "value";
+
+  [HttpPost] // POST api/values
+  public void Post([FromBody] string value) { }
+}
+```
+
+***
+
+### Атрибуты MVC
+
+**Управление путями**
+`[Route("api/[controller]")]`, `[HttpGet("{id}")]`
+
+**Управление методами**
+`[HttpGet]`, `[HttpPost]`, `[HttpDelete]`
+`[HttpPut]`, `[HttpPatch]`,
+`[HttpHead]`, `[HttpOptions]`,
+
+**Управление источником данных**
+`[FromHeader]`, `[FromQuery]`, `[FromRoute]`,
+`[FromForm]`, `[FromBody]`, можно дописать свои
+
+***
+
+### Запуск Web API
+
+```bash
+dotnet run -p ValuesApi
+```
+
+https://localhost:5001/api/values
+http://localhost:5000/api/values
+
+***
+
+### Демо. Postman
+
+1. Import / Import File
+   Из `/WebApi/Samples/ValuesApi.postman_collection.json`
+2. File / Settings / General / SSL certificate verification
+   *Установить в OFF*
+3. Collections / ValuesApi / Выбрать ... / Edit / Variables / baseUrl
+   *Записать адрес, где развернуто приложение*
+4. Collections / ValuesApi / Открыть любой запрос
+   *Запустить*: увидеть статус код, тело, результаты тестов
+   *Найти*: Params, Headers, Body, Pre-request Script, Tests
+5. Runner / Collection Runner / ValuesApi / Run ValuesApi
+   *Посмотреть результат прохождения тестов*
+
+***
+
+### Postman — UI для бэкендера
+
+
+</script></section>
+
+
+<section data-markdown><script type="text/template">
+
+## Коллекция ресурсов
+
+***
+
+### Ресурсы, а не функции
+
+Большинство действий можно рассматривать
+как создание и изменение ресурсов
+
+Вместо
+`POST /reserveBook?bookId=5`
+Использовать
+`PUT /books/5/reservation`
+
+В результате:
+- API делится на кусочки
+- Действия сводятся к CRUD над ресурсами,
+  представимыми методами HTTP
+- Легко понять API, зная его  URI и HTTP-методы
+
+***
+
+### Тренировка. Что делают вызовы API?
+
+<span class="fragment">`GET /users/5`</span>
+<span class="fragment">`POST /users`</span>
+<span class="fragment">`DELETE /users/6`</span>
+<span class="fragment">`PUT /users/2`</span>
+<span class="fragment">`PUT /users/100500`</span>
+<span class="fragment">`PATCH /users/3`</span>
+<span class="fragment">`GET /users`</span>
+<span class="fragment">`GET /users?pageNumber=5&pageSize=100`</span>
+<span class="fragment">`OPTIONS /users`</span>
+<span class="fragment">`OPTIONS /users/6`</span>
+<span class="fragment">`HEAD /users/5`</span>
+
+***
+
+### Нюансы
+
+<span class="fragment">Как правильно `PUT /users/4` или `PUT /user/5`?</span>
+<ul><li class="fragment">Верны оба варианта. Но важно, чтобы везде в API был один стиль
+  Так как в любом случае `GET /users`,
+  то `PUT /users/4` более единообразен</li></ul>
+
+<span class="fragment">
+  Можно ли использовать функции или только ресурсы?
+  Например, `POST /books/5/reserve`
+</span>
+<ul><li class="fragment">Можно, если выражение идеи через ресурсы
+  сделает API менее понятным</li></ul>
+
+***
+
+### Паттерн Repository
+
+```cs
+interface IUserRepository
+{
+    UserEntity Insert(UserEntity user);
+    UserEntity FindById(Guid id);
+    UserEntity GetOrCreateByLogin(string login);
+    void Update(UserEntity user);
+    UserEntity UpdateOrInsert(UserEntity user);
+    void Delete(Guid id);
+}
+```
+
+- Позволяет скрыть особенности хранения данных за абстракцией
+- Можно разрабатывать и тестировать API отдельно от БД
+- Каждому тип сущностей — отдельный репозиторий
+- Содержит все нужные и допустимые методы
+
+***
+
+### Data Transfer Object
+
+**Простой объект для передачи данных**,
+не содержит методов и логики
+
+Если API принимает или возвращает объекты
+в виде XML, JSON или других форматах, то это DTO
+
+**Полезно создавать отдельные DTO** для каждого метода API,
+потому что набор полей или правил проверки
+отличается от метода к методу
+
+***
+
+### Именование DTO
+
+**Примеры названий для GET**
+- UserDto
+- UserToGetDto, UserToGet
+
+**Примеры названий для POST**
+- UserForCreationDto, UserForCreation
+- UserToCreateDto, UserToCreate
+- UserToPostDto, UserToPost
+
+И многие другие варианты...
+
+***
+
+### Задача 1. UsersApi
+
+</script></section>
+
+
+<section data-markdown><script type="text/template">
+
+## Документация API
+
+</script></section>
+
+
+<section data-markdown><script type="text/template">
+
+## Принципы REST
+
+</script></section>
+
+
+<section data-markdown><script type="text/template">
+
+## Практика проектирования API
+
+</script></section>
+
+
+<section data-markdown><script type="text/template">
 
 
 ## Вопросы?
