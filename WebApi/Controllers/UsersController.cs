@@ -1,6 +1,5 @@
 using System;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.JsonPatch;
 using WebApi.Models;
 
 namespace WebApi.Controllers
@@ -16,37 +15,6 @@ namespace WebApi.Controllers
 
         [HttpPost]
         public IActionResult CreateUser([FromBody] object user)
-        {
-            throw new NotImplementedException();
-        }
-
-        [HttpDelete("{userId}")]
-        public IActionResult DeleteUser([FromRoute] Guid userId)
-        {
-            throw new NotImplementedException();
-        }
-
-        [HttpPut("{userId}")]
-        public IActionResult UpdateUser([FromRoute] Guid userId, [FromBody] object user)
-        {
-            throw new NotImplementedException();
-        }
-
-        [HttpPatch("{userId}")]
-        public IActionResult PartiallyUpdateUser([FromRoute] Guid userId,
-            [FromBody] JsonPatchDocument<object> patchDoc)
-        {
-            throw new NotImplementedException();
-        }
-
-        [HttpGet]
-        public IActionResult GetUsers(int pageNumber = 1, int pageSize = 10)
-        {
-            throw new NotImplementedException();
-        }
-
-        [HttpOptions]
-        public IActionResult GetUsersOptions()
         {
             throw new NotImplementedException();
         }

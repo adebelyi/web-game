@@ -63,10 +63,15 @@ namespace WebGame.Domain
             userCollection.ReplaceOne(u => u.Id == user.Id, user);
         }
 
+        // Для вывода списка всех пользователей (упорядоченных по логину)
+        // страницы нумеруются с единицы
         public PageList<UserEntity> GetPage(int pageNumber, int pageSize)
         {
             var totalCount = userCollection.CountDocuments(u => true);
-            var users = userCollection.Find(u => true).Skip((pageNumber - 1) * pageSize).Limit(pageSize).ToList();
+            var users = userCollection.Find(u => true)
+                .Skip((pageNumber - 1) * pageSize)
+                .Limit(pageSize)
+                .ToList();
             return new PageList<UserEntity>(
                 users, totalCount, pageNumber, pageSize);
         }

@@ -259,7 +259,7 @@
 		{
 			"id": "9f9ce28a-bfda-4c35-a16e-f30226a32fd2",
 			"key": "baseUrl",
-			"value": "/",
+			"value": "",
 			"type": "string"
 		}
 	]

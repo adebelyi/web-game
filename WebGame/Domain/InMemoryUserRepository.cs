@@ -17,7 +17,7 @@ namespace WebGame.Domain
 
         private void AddAdmin()
         {
-            var user = new UserEntity(adminId, AdminLogin, "Halliday", "James ", 999, null);
+            var user = new UserEntity(adminId, AdminLogin, "Halliday", "James", 999, null);
             entities[user.Id] = user;
         }
 
