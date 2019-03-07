@@ -33,7 +33,11 @@ namespace WebApi
                         $"{expr.LastName} {expr.FirstName}"));
 
                 cfg.CreateMap<CreateUserDTO, UserEntity>();
+                cfg.CreateMap<UpsertUserDTO, UserEntity>();
+                cfg.CreateMap<UserEntity, UpsertUserDTO>();
             });
+            
+            services.AddSwaggerGeneration();
 
             services.AddRouting(options => options.LowercaseUrls = true);
             services.AddMvc(options =>
@@ -61,7 +65,8 @@ namespace WebApi
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-
+            
+            app.UseSwaggerWithUI();
             app.UseHttpsRedirection();
             app.UseMvc();
         }
