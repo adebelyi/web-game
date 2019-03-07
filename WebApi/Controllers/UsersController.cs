@@ -1,7 +1,9 @@
 using System;
 using System.Linq;
 using AutoMapper;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Design;
 using WebApi.Models;
 using WebGame.Domain;
 
@@ -72,6 +74,78 @@ namespace WebApi.Controllers
             }
 
             userRepository.Delete(userId);
+
+            return NoContent();
+        }
+
+        [HttpPut("{userId}")]
+        public IActionResult Upsert([FromRoute] Guid userId, [FromBody] UpsertUserDTO user)
+        {
+            if (user == null || userId == Guid.Empty)
+            {
+                return BadRequest();
+            }
+
+            if (user.Login != null && !user.Login.All(c => char.IsDigit(c) || char.IsLetter(c)))
+            {
+                ModelState.AddModelError(nameof(UpsertUserDTO.Login), "Логин должен состоять только из цифр и букв.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return UnprocessableEntity(ModelState);
+            }
+
+            var isExists = userRepository.FindById(userId) != null;
+            var userEntity = new UserEntity(userId);
+            Mapper.Map(user, userEntity);
+            userRepository.UpdateOrInsert(userEntity);
+
+            if (isExists)
+            {
+                return NoContent();
+            }
+
+            return CreatedAtRoute(
+                nameof(GetUserById),
+                new {userId = userEntity.Id},
+                userEntity.Id
+            );
+        }
+
+        [HttpPatch("{userId}")]
+        public IActionResult PartiallyUpdateUser([FromRoute] Guid userId, [FromBody] JsonPatchDocument<UpsertUserDTO> patchUser)
+        {
+            if (patchUser == null)
+            {
+                return BadRequest();
+            }
+            
+            var userEntity = userRepository.FindById(userId);
+
+            if (userEntity == null)
+            {
+                return NotFound();
+            }
+
+            var updatedDto = Mapper.Map<UpsertUserDTO>(userEntity);
+            patchUser.ApplyTo(updatedDto, ModelState);
+            TryValidateModel(updatedDto);
+            
+            if (updatedDto.Login == null ||
+                updatedDto.Login != null && !updatedDto.Login.All(c => char.IsDigit(c) || char.IsLetter(c)))
+            {
+                ModelState.AddModelError(nameof(UpsertUserDTO.Login), "Логин должен состоять только из цифр и букв.");
+            }
+            
+            if (!ModelState.IsValid)
+            {
+                return UnprocessableEntity(ModelState);
+            }
+            
+            userEntity = new UserEntity(userId);
+            Mapper.Map(updatedDto, userEntity);
+            userRepository.Update(userEntity);
 
             return NoContent();
         }
